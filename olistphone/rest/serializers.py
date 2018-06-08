@@ -13,7 +13,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'name')
 
 # Class responsible for serializing CallRecord objects
-class RecordSerializer(serializers.ModelSerializer):
+class CallRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = CallRecord
 

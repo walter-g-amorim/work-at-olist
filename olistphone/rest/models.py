@@ -12,7 +12,7 @@ RECORD_TYPES = (
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):
     # Call records can be either Start or End records
-    # Type of the record model
+    # Type of the record model. Unfortunately, "type" is a reserved word
     record_type = models.CharField(
         max_length=1,
         choices=RECORD_TYPES
@@ -47,6 +47,7 @@ class CallRecord(models.Model):
     # Uses phone_validator_regex for validation
     source = models.CharField(
         validators=[phone_validator_regex],
+        min_length=10,
         max_length=11,
         blank=True,
         null=True
@@ -55,6 +56,7 @@ class CallRecord(models.Model):
     # Uses phone_validator_regex for validation
     destination = models.CharField(
         validators=[phone_validator_regex],
+        min_length=10,
         max_length=11,
         blank=True,
         null=True
