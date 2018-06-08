@@ -47,7 +47,6 @@ class CallRecord(models.Model):
     # Uses phone_validator_regex for validation
     source = models.CharField(
         validators=[phone_validator_regex],
-        min_length=10,
         max_length=11,
         blank=True,
         null=True
@@ -56,7 +55,6 @@ class CallRecord(models.Model):
     # Uses phone_validator_regex for validation
     destination = models.CharField(
         validators=[phone_validator_regex],
-        min_length=10,
         max_length=11,
         blank=True,
         null=True
