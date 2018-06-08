@@ -3,14 +3,15 @@ from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 
 
+# Enumeration makes further modifications, if necessary, easier
+RECORD_TYPES = (
+    ('S', 'Start'),
+    ('E', 'End'),
+)
+
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):
     # Call records can be either Start or End records
-    # Enumeration makes further modifications, if necessary, easier
-    RECORD_TYPES = (
-        ('S', 'Start'),
-        ('E', 'End'),
-    )
     # Type of the record model
     record_type = models.CharField(
         max_length=1,
@@ -18,10 +19,10 @@ class CallRecord(models.Model):
     )
 
     # Timestamp of the event
-    record_timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField()
 
     # Unique-pair call ID.
-    call_id = models.CharField(max_length=255)
+    call_id = models.PositiveIntegerField()
 
     # Since call_id is not unique, but a unique-pair, we need to define
     # a combination of fields for uniqueness
@@ -44,7 +45,7 @@ class CallRecord(models.Model):
     )
     # Source (caller) phone number.
     # Uses phone_validator_regex for validation
-    source_number = models.CharField(
+    source = models.CharField(
         validators=[phone_validator_regex],
         max_length=11,
         blank=True,
@@ -52,7 +53,7 @@ class CallRecord(models.Model):
     )
     # Destination (called) phone number.
     # Uses phone_validator_regex for validation
-    destination_number = models.CharField(
+    destination = models.CharField(
         validators=[phone_validator_regex],
         max_length=11,
         blank=True,
@@ -63,6 +64,6 @@ class CallRecord(models.Model):
     # If we are creating a End Call Record, it should not have any
     # phone numbers stored.
     def clean(self):
-        if ((self.source_number or self.destination_number is not None) and
+        if ((self.source or self.destination is not None) and
                 self.record_type == 'E'):
             raise ValidationError('End records must not have numbers.')
