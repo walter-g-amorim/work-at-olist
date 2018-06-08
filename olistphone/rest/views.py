@@ -4,7 +4,7 @@ from rest.serializers import UserSerializer, GroupSerializer
 
 # Create your views here.
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('-date_joined')
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 
 class GroupViewSet(viewsets.ModelViewSet):
