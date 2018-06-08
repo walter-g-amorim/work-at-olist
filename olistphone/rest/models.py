@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 
 
 # CallRecord models the start and end of a phone call
@@ -46,12 +47,22 @@ class CallRecord(models.Model):
     source_number = models.CharField(
         validators=[phone_validator_regex],
         max_length=11,
-        blank=True
+        blank=True,
+        null=True
     )
     # Destination (called) phone number.
     # Uses phone_validator_regex for validation
     destination_number = models.CharField(
         validators=[phone_validator_regex],
         max_length=11,
-        blank=True
+        blank=True,
+        null=True
     )
+
+    # Additional validation for the record model
+    # If we are creating a End Call Record, it should not have any
+    # phone numbers stored.
+    def clean(self):
+        if ((self.source_number or self.destination_number is not None) and
+                self.record_type == 'E'):
+            raise ValidationError('End records must not have numbers.')
