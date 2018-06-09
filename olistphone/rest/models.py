@@ -2,12 +2,12 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 
-
 # Enumeration makes further modifications, if necessary, easier
 RECORD_TYPES = (
     ('S', 'Start'),
     ('E', 'End'),
 )
+
 
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):

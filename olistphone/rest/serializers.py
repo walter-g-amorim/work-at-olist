@@ -1,18 +1,21 @@
 from django.contrib.auth.models import User, Group
-from rest.models import CallRecord, RECORD_TYPES
+from rest.models import CallRecord
 from rest_framework import serializers
 from collections import OrderedDict
 from rest_framework.fields import SkipField
+
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
         fields = ('url', 'username', 'email', 'groups')
 
+
 class GroupSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Group
         fields = ('url', 'name')
+
 
 # Class responsible for serializing CallRecord objects
 class CallRecordSerializer(serializers.ModelSerializer):
@@ -26,7 +29,7 @@ class CallRecordSerializer(serializers.ModelSerializer):
             'source',
             'destination'
         )
-    
+
     # We want to omit NULL/None fields from the representation,
     # so we need to override the Serializer methods.
     # This is pretty close to the actual implementation
