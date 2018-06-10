@@ -67,4 +67,3 @@ class CallRecord(models.Model):
         if ((self.source or self.destination is not None) and
                 self.record_type == 'E'):
             raise ValidationError('End records must not have numbers.')
-

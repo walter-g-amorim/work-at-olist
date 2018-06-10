@@ -1,8 +1,8 @@
-from rest.models import CallRecord
 from itertools import groupby
 from dateutil.relativedelta import relativedelta
 from math import floor
 from olistphone.settings import CONFIG
+
 
 def calculate_bills(records):
     calls = groupby(records, lambda call: call.call_id)
@@ -29,17 +29,20 @@ def calculate_bills(records):
         )
     return bills
 
+
 def calculate_basic_tariff(start, end):
     delta = end - start
     call_minutes = floor(delta.seconds/60)
     tariff = call_minutes * CONFIG.get("MINUTE_CHARGE")
     return tariff
 
+
 def calculate_discount_tariff(start, end):
     delta = end - start
     call_minutes = floor(delta.seconds/60)
     tariff = call_minutes * CONFIG.get("DISCOUNT_CHARGE")
     return tariff
+
 
 def calculate_period(timestamp):
     if (timestamp.hour >= 6) and (timestamp.hour < 22):
@@ -63,13 +66,16 @@ def calculate_period(timestamp):
         )
     return is_discount_period, to_break
 
+
 def calculate_time_delta(start, end):
     return end - start
+
 
 def delta_hours(delta):
     return floor(delta.seconds/3600)
 
-def calculate_pricing(start,end):
+
+def calculate_pricing(start, end):
     tariff = 0
     delta = calculate_time_delta(start, end)
     current = start
@@ -77,18 +83,14 @@ def calculate_pricing(start,end):
         is_discount_period, to_break = calculate_period(current)
         if delta > to_break:
             if is_discount_period:
-                tariff += (
-                    calculate_discount_tariff(
-                        current,
-                        (current+to_break)
-                    )
+                tariff += calculate_discount_tariff(
+                    current,
+                    (current+to_break)
                 )
             else:
-                tariff += (
-                    calculate_basic_tariff(
-                        current,
-                        (current+to_break)
-                    )
+                tariff += calculate_basic_tariff(
+                    current,
+                    (current+to_break)
                 )
             delta -= to_break
             current += to_break

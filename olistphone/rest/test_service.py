@@ -1,12 +1,10 @@
 from django.test import TestCase
-from rest.models import CallRecord
 import rest.services as services
 from django.utils import timezone
-from django.db.utils import IntegrityError
-from django.core.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from olistphone.settings import CONFIG
+
 
 class CallRecordServiceTests(TestCase):
 

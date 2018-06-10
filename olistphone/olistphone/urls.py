@@ -16,12 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.conf.urls import url
 from django.urls import path, include
-from rest_framework import routers
 from rest import views
 
 urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls',
                                namespace='rest_framework')),
-    url(r'records', views.CallRecordView.as_view()),
+    url(r'records/<string:phone_number>', views.CallRecordView.as_view()),
     path('admin/', admin.site.urls),
 ]

@@ -3,6 +3,7 @@ from rest_framework import serializers
 from collections import OrderedDict
 from rest_framework.fields import SkipField
 
+
 # Class responsible for serializing CallRecord objects
 class CallRecordSerializer(serializers.ModelSerializer):
     class Meta:

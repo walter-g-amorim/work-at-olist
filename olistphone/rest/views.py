@@ -1,18 +1,15 @@
-from django.contrib.auth.models import User, Group
 from rest.models import CallRecord
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest.serializers import CallRecordSerializer
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 import rest.services as services
-from json import dumps, loads
 
 
 class CallRecordView(APIView):
     renderer_classes = (JSONRenderer, )
-   
+
     def get(self, request, format='json'):
         print(request.data)
         # With no parameters, we take the whole last month as the reference
