@@ -8,12 +8,23 @@ RECORD_TYPES = (
     ('E', 'End'),
 )
 
+# Here we define what a valid phone number is,
+# following the repository's guidelines
+# Phone numbers have to be all digits (0-9)
+# Their length has to be between 10 (2 area digits + 8 phone digits)
+# and 11 (2 area digits + 9 phone digits)
+phone_validator_regex = RegexValidator(
+    regex=r'^\d{10,11}$',
+    code="invalid_phone_number",
+    message='Phone numbers must be all digits,'
+    + ' with 2 area code digits and 8 or 9 phone number digits.'
+)
 
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):
     # Call records can be either Start or End records
-    # Type of the record model. Unfortunately, "type" is a reserved word
-    record_type = models.CharField(
+    # Type of the record model.
+    type = models.CharField(
         max_length=1,
         choices=RECORD_TYPES
     )
@@ -30,19 +41,8 @@ class CallRecord(models.Model):
         # This makes it so we can have one Start record
         # and one End record with the same call_id, but never more than
         # one of each
-        unique_together = ['record_type', 'call_id']
+        unique_together = ['type', 'call_id']
 
-    # Here we define what a valid phone number is,
-    # following the repository's guidelines
-    # Phone numbers have to be all digits (0-9)
-    # Their length has to be between 10 (2 area digits + 8 phone digits)
-    # and 11 (2 area digits + 9 phone digits)
-    phone_validator_regex = RegexValidator(
-        regex=r'^\d{10,11}$',
-        code="invalid_phone_number",
-        message='Phone numbers must be all digits,'
-        + ' with 2 area code digits and 8 or 9 phone number digits.'
-    )
     # Source (caller) phone number.
     # Uses phone_validator_regex for validation
     source = models.CharField(
@@ -65,5 +65,41 @@ class CallRecord(models.Model):
     # phone numbers stored.
     def clean(self):
         if ((self.source or self.destination is not None) and
-                self.record_type == 'E'):
+                self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
+
+# PhoneBill represents a single billing of a pair of call records
+class PhoneBill(models.Model):
+    # The destination number of the call. Follows the same validation
+    # as the CallRecord phone numbers.
+    destination = models.CharField(
+        validators=[phone_validator_regex],
+        max_length=11
+    )
+
+    # The starting timestamp of the call.
+    start_timestamp = models.DateTimeField()
+
+    # The duration of the call in seconds.
+    call_duration = models.PositiveIntegerField()
+
+    # The full value charge of the phone call.
+    # Using DecimalFields to avoid float precision loss.
+    charge = models.DecimalField(decimal_places=2, max_digits=15)
+
+# CallTariff represents the tariffs referring to a call in a certain
+# period of time
+class CallTariff(models.Model):
+
+    # Base flat charge for all calls
+    base_tariff = models.DecimalField(decimal_places=2, max_digits=15)
+
+    # Tariff added per full minute in the normal time period
+    minute_charge = models.DecimalField(decimal_places=2, max_digits=15)
+
+    # Tariff added per full minute in the discounted time period
+    discount_charge = models.DecimalField(decimal_places=2, max_digits=15)
+
+    # This tariff applies to everything after this date and before
+    # the next tariff's valid_after field
+    valid_after = models.DateField()

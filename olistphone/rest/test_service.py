@@ -4,35 +4,155 @@ from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from olistphone.settings import CONFIG
+from rest.models import CallTariff, PhoneBill
+from rest.test_models import create_record
+from decimal import *
+getcontext().prec = 2
 
 
 class CallRecordServiceTests(TestCase):
+
+    def setUp(self):
+        self.call_tariff = CallTariff.objects.create(
+            base_tariff=Decimal(0.36),
+            minute_charge=Decimal(0.09),
+            discount_charge=Decimal(0),
+            valid_after=timezone.now().replace(
+                day=27,
+                month=6,
+                year=1994
+            )
+        )
+        self.records = []
+        self.bills = []
+        time_start = timezone.now().replace(
+            hour=10,
+            minute=0,
+            second=0
+        )
+        time_end = time_start + relativedelta(seconds=137)
+        record = create_record(
+            type='S',
+            timestamp=time_start,
+            call_id=40,
+            source='2199999999',
+            destination='41000000000'
+        )
+        self.records.append(record)
+        bill = PhoneBill(
+            destination=record.destination,
+            start_timestamp=time_start,
+            call_duration=(time_end-time_start).seconds,
+            charge=(
+                self.call_tariff.base_tariff
+                + (2*self.call_tariff.minute_charge)
+            )
+        )
+        bill.save()
+        self.bills.append(bill)
+        self.records.append(record)
+        record = create_record(
+            type='E',
+            timestamp=time_end,
+            call_id=40
+        )
+        time_start = timezone.now().replace(
+            hour=12,
+            minute=30,
+            second=0
+        )
+        self.records.append(record)
+        time_end = time_start + relativedelta(seconds=151)
+        record = create_record(
+            type='S',
+            timestamp=time_start,
+            call_id=41,
+            source='2199999999',
+            destination='41000000000'
+        )
+        bill = PhoneBill(
+            destination=record.destination,
+            start_timestamp=time_start,
+            call_duration=(time_end-time_start).seconds,
+            charge=(
+                self.call_tariff.base_tariff
+                + (2*self.call_tariff.minute_charge)
+            )
+        )
+        bill.save()
+        self.bills.append(bill)
+        self.records.append(record)
+        record = create_record(
+            type='E',
+            timestamp=time_end,
+            call_id=41
+        )
+        self.records.append(record)
+        time_start = timezone.now().replace(
+            hour=23,
+            minute=10,
+            second=0
+        )
+        time_end = time_start + relativedelta(seconds=130)
+        record = create_record(
+            type='S',
+            timestamp=time_start,
+            call_id=42,
+            source='2199999999',
+            destination='41000000000'
+        )
+        bill = PhoneBill(
+            destination=record.destination,
+            start_timestamp=time_start,
+            call_duration=(time_end-time_start).seconds,
+            charge=(
+                self.call_tariff.base_tariff
+                + (2*self.call_tariff.discount_charge)
+            )
+        )
+        bill.save()
+        self.bills.append(bill)
+        self.records.append(record)
+        record = create_record(
+            type='E',
+            timestamp=time_end,
+            call_id=42
+        )
+        self.records.append(record)
 
     def test_calculate_basic_tariff(self):
         time_start = timezone.now().replace(second=0)
         time_end = time_start + relativedelta(seconds=137)
         tariff = (
-            CONFIG.get("BASE_TARIFF")
-            + services.calculate_basic_tariff(time_start, time_end)
+            self.call_tariff.base_tariff
+            + services.calculate_basic_tariff(
+                time_start,
+                time_end,
+                self.call_tariff
+            )
         )
         expected = (
-            CONFIG.get("BASE_TARIFF")
-            + (2 * CONFIG.get("MINUTE_CHARGE"))
+            self.call_tariff.base_tariff
+            + (2 * self.call_tariff.minute_charge)
         )
-        self.assertAlmostEqual(tariff, expected)
+        self.assertEqual(tariff, expected)
 
     def test_calculate_discount_tariff(self):
         time_start = timezone.now().replace(second=0)
         time_end = time_start + relativedelta(seconds=137)
         tariff = (
-            CONFIG.get("BASE_TARIFF")
-            + services.calculate_discount_tariff(time_start, time_end)
+            self.call_tariff.base_tariff
+            + services.calculate_discount_tariff(
+                time_start,
+                time_end,
+                self.call_tariff
+            )
         )
         expected = (
-            CONFIG.get("BASE_TARIFF")
-            + (2 * CONFIG.get("DISCOUNT_CHARGE"))
+            self.call_tariff.base_tariff
+            + (2 * self.call_tariff.discount_charge)
         )
-        self.assertAlmostEqual(tariff, expected)
+        self.assertEqual(tariff, expected)
 
     def test_calculate_time_delta(self):
         time_start = timezone.now()
@@ -90,29 +210,46 @@ class CallRecordServiceTests(TestCase):
         time_start = timezone.now().replace(hour=12, minute=0, second=0)
         time_end = time_start + relativedelta(minutes=3, seconds=43)
         expected = (
-            CONFIG.get("BASE_TARIFF")
-            + (3 * CONFIG.get("MINUTE_CHARGE"))
+            self.call_tariff.base_tariff
+            + (3 * self.call_tariff.minute_charge)
         )
-        tariff = services.calculate_pricing(time_start, time_end)
-        self.assertAlmostEqual(tariff, expected)
+        tariff = services.calculate_pricing(
+            time_start,
+            time_end,
+            self.call_tariff
+        )
+        self.assertEqual(tariff, expected)
 
     def test_calculate_pricing_discount_period(self):
         time_start = timezone.now().replace(hour=5, minute=0, second=0)
         time_end = time_start + relativedelta(minutes=1, seconds=14)
         expected = (
-            CONFIG.get("BASE_TARIFF")
-            + (1 * CONFIG.get("DISCOUNT_CHARGE"))
+            self.call_tariff.base_tariff
+            + (1 * self.call_tariff.discount_charge)
         )
-        tariff = services.calculate_pricing(time_start, time_end)
-        self.assertAlmostEqual(tariff, expected)
+        tariff = services.calculate_pricing(
+            time_start,
+            time_end,
+            self.call_tariff
+        )
+        self.assertEqual(tariff, expected)
 
     def test_calculate_pricing_multiple_periods(self):
         time_start = timezone.now().replace(hour=21, minute=0, second=0)
         time_end = time_start + relativedelta(hours=9, minutes=10)
         expected = (
-            CONFIG.get("BASE_TARIFF")
-            + (7 * 60 * CONFIG.get("DISCOUNT_CHARGE"))
-            + (70 * CONFIG.get("MINUTE_CHARGE"))
+            self.call_tariff.base_tariff
+            + (7 * 60 * self.call_tariff.discount_charge)
+            + (70 * self.call_tariff.minute_charge)
         )
-        tariff = services.calculate_pricing(time_start, time_end)
-        self.assertAlmostEqual(tariff, expected)
+        tariff = services.calculate_pricing(
+            time_start,
+            time_end,
+            self.call_tariff
+        )
+        self.assertEqual(tariff, expected)
+
+    def test_calculate_bills(self):
+        expected = self.bills
+        actual = services.calculate_bills(self.records)
+        self.assertEqual(actual, expected)

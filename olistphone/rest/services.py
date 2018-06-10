@@ -1,9 +1,12 @@
 from itertools import groupby
 from dateutil.relativedelta import relativedelta
 from math import floor
-from olistphone.settings import CONFIG
+from rest.models import PhoneBill, CallTariff
+import json
+from decimal import *
+getcontext().prec = 2
 
-
+# Gets the call records and transforms them into bills.
 def calculate_bills(records):
     calls = groupby(records, lambda call: call.call_id)
     bills = []
@@ -12,35 +15,44 @@ def calculate_bills(records):
         end = ""
         destination = ""
         for call_record in call_records:
-            if call_record.record_type == "S":
+            if call_record.type == "S":
                 start = call_record.timestamp
                 destination = call_record.destination
             else:
                 end = call_record.timestamp
-        price = calculate_pricing(start, end)
-        duration = calculate_time_delta(start, end)
-        bills.append(
-            {
-                "destination": destination,
-                "call start timestamp": start,
-                "call duration": duration,
-                "total price": price
-            }
-        )
+        try:
+            bill = PhoneBill.objects.get(
+                destination=destination,
+                start_timestamp=start
+            )
+        except PhoneBill.DoesNotExist:
+            tariff = CallTariff.objects.filter(
+                valid_after__lte=start
+            ).order_by('-valid_after')[0]
+            charge = calculate_pricing(start, end, tariff)
+            duration = calculate_time_delta(start, end)
+            bill = PhoneBill(
+                destination=destination,
+                start_timestamp=start,
+                call_duration=duration.seconds,
+                charge=charge
+            )
+            bill.save()
+        bills.append(bill)
     return bills
 
 
-def calculate_basic_tariff(start, end):
+def calculate_basic_tariff(start, end, call_tariff):
     delta = end - start
     call_minutes = floor(delta.seconds/60)
-    tariff = call_minutes * CONFIG.get("MINUTE_CHARGE")
+    tariff = call_minutes * call_tariff.minute_charge
     return tariff
 
 
-def calculate_discount_tariff(start, end):
+def calculate_discount_tariff(start, end, call_tariff):
     delta = end - start
     call_minutes = floor(delta.seconds/60)
-    tariff = call_minutes * CONFIG.get("DISCOUNT_CHARGE")
+    tariff = call_minutes * call_tariff.discount_charge
     return tariff
 
 
@@ -75,7 +87,7 @@ def delta_hours(delta):
     return floor(delta.seconds/3600)
 
 
-def calculate_pricing(start, end):
+def calculate_pricing(start, end, call_tariff):
     tariff = 0
     delta = calculate_time_delta(start, end)
     current = start
@@ -85,20 +97,22 @@ def calculate_pricing(start, end):
             if is_discount_period:
                 tariff += calculate_discount_tariff(
                     current,
-                    (current+to_break)
+                    (current+to_break),
+                    call_tariff
                 )
             else:
                 tariff += calculate_basic_tariff(
                     current,
-                    (current+to_break)
+                    (current+to_break),
+                    call_tariff
                 )
             delta -= to_break
             current += to_break
         else:
-            tariff += (
-                calculate_discount_tariff(current, end) if is_discount_period
-                else calculate_basic_tariff(current, end)
-            )
+            if is_discount_period:
+                tariff += calculate_discount_tariff(current, end, call_tariff)
+            else:
+                tariff += calculate_basic_tariff(current, end, call_tariff)
             break
-    tariff += CONFIG.get("BASE_TARIFF")
+    tariff += call_tariff.base_tariff
     return tariff

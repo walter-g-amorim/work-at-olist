@@ -4,30 +4,27 @@ from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
 
+def create_record(
+        type=None,
+        timestamp=None,
+        call_id=None,
+        source=None,
+        destination=None):
+    return CallRecord.objects.create(
+        type=type,
+        timestamp=timestamp,
+        call_id=call_id,
+        source=source,
+        destination=destination
+    )
 
 # Create your tests here.
 class CallRecordTests(TestCase):
 
-    def create_record(
-            self,
-            record_type=None,
-            timestamp=None,
-            call_id=None,
-            source=None,
-            destination=None
-    ):
-        return CallRecord.objects.create(
-            record_type=record_type,
-            timestamp=timestamp,
-            call_id=call_id,
-            source=source,
-            destination=destination
-        )
-
     def test_create_new_record(self):
         time = timezone.now()
-        record = self.create_record(
-            record_type='S',
+        record = create_record(
+            type='S',
             timestamp=time,
             call_id=40,
             source='2199999999',
@@ -35,18 +32,18 @@ class CallRecordTests(TestCase):
         )
         self.assertIsNotNone(record)
         self.assertIsInstance(record, CallRecord)
-        self.assertEquals(record.record_type, 'S')
+        self.assertEquals(record.type, 'S')
         self.assertEquals(record.timestamp, time)
         self.assertEquals(record.call_id, 40)
         self.assertEquals(record.source, '2199999999')
         self.assertEquals(record.destination, '41000000000')
 
     def test_required_fields_are_required(self):
-        self.assertRaises(IntegrityError, self.create_record)
+        self.assertRaises(IntegrityError, create_record)
 
     def test_phone_number_format_more_digits(self):
-        record = self.create_record(
-            record_type='S',
+        record = create_record(
+            type='S',
             timestamp=timezone.now(),
             call_id=40,
             source='2199999999',
@@ -58,8 +55,8 @@ class CallRecordTests(TestCase):
         )
 
     def test_phone_number_format_less_digits(self):
-        record = self.create_record(
-            record_type='S',
+        record = create_record(
+            type='S',
             timestamp=timezone.now(),
             call_id=40,
             source='219999999',
@@ -71,8 +68,8 @@ class CallRecordTests(TestCase):
         )
 
     def test_phone_number_format_invalid_characters(self):
-        record = self.create_record(
-            record_type='S',
+        record = create_record(
+            type='S',
             timestamp=timezone.now(),
             call_id=40,
             source='219999999a',
@@ -84,15 +81,15 @@ class CallRecordTests(TestCase):
         )
 
     def test_end_record_must_have_no_numbers(self):
-        good_record = self.create_record(
-            record_type='E',
+        good_record = create_record(
+            type='E',
             timestamp=timezone.now(),
             call_id=40,
         )
         self.assertIsNotNone(good_record)
         self.assertIsInstance(good_record, CallRecord)
-        bad_record = self.create_record(
-            record_type='E',
+        bad_record = create_record(
+            type='E',
             timestamp=timezone.now(),
             call_id=41,
             source='2199999999',
@@ -101,8 +98,8 @@ class CallRecordTests(TestCase):
         self.assertRaises(ValidationError, bad_record.clean)
 
     def test_record_uniqueness(self):
-        record1 = self.create_record(
-            record_type='S',
+        record1 = create_record(
+            type='S',
             timestamp=timezone.now(),
             call_id=40,
             source='2199999999',
@@ -110,8 +107,8 @@ class CallRecordTests(TestCase):
         )
         self.assertIsNotNone(record1)
         self.assertIsInstance(record1, CallRecord)
-        record2 = self.create_record(
-            record_type='E',
+        record2 = create_record(
+            type='E',
             timestamp=timezone.now(),
             call_id=40,
         )
@@ -119,8 +116,8 @@ class CallRecordTests(TestCase):
         self.assertIsInstance(record2, CallRecord)
         self.assertRaises(
             IntegrityError,
-            self.create_record,
-            record_type='S',
+            create_record,
+            type='S',
             timestamp=timezone.now(),
             call_id=40,
             source='2112349999',

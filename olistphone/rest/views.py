@@ -1,4 +1,4 @@
-from rest.models import CallRecord
+from rest.models import CallRecord, CallTariff
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
@@ -11,7 +11,6 @@ class CallRecordView(APIView):
     renderer_classes = (JSONRenderer, )
 
     def get(self, request, format='json'):
-        print(request.data)
         # With no parameters, we take the whole last month as the reference
         # period
         last_reference_start = timezone.now().replace(
@@ -30,7 +29,7 @@ class CallRecordView(APIView):
         )+relativedelta(days=-1)
         # Find calls that ended in the reference period as in spec
         monthly_records_by_end = CallRecord.objects.filter(
-            record_type='E',
+            type='E',
             timestamp__gte=last_reference_start,
             timestamp__lte=last_reference_end
         )
