@@ -1,10 +1,11 @@
-from rest.models import CallRecord, CallTariff
+from rest.models import CallRecord
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 import rest.services as services
+from rest.serializers import PhoneBillSerializer
 
 
 class CallRecordView(APIView):
@@ -40,4 +41,5 @@ class CallRecordView(APIView):
         # Get the whole collection of records to be billed
         billed_records = CallRecord.objects.filter(call_id__in=call_ids)
         bills = services.calculate_bills(billed_records)
-        return Response(bills)
+        serializer = PhoneBillSerializer(bills, many=True)
+        return Response(serializer.data)

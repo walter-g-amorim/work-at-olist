@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
 
+
 def create_record(
         type=None,
         timestamp=None,
@@ -17,6 +18,7 @@ def create_record(
         source=source,
         destination=destination
     )
+
 
 # Create your tests here.
 class CallRecordTests(TestCase):

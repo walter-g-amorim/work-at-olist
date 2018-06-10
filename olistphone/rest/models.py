@@ -20,6 +20,7 @@ phone_validator_regex = RegexValidator(
     + ' with 2 area code digits and 8 or 9 phone number digits.'
 )
 
+
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):
     # Call records can be either Start or End records
@@ -68,6 +69,7 @@ class CallRecord(models.Model):
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
 
+
 # PhoneBill represents a single billing of a pair of call records
 class PhoneBill(models.Model):
     # The destination number of the call. Follows the same validation
@@ -86,6 +88,7 @@ class PhoneBill(models.Model):
     # The full value charge of the phone call.
     # Using DecimalFields to avoid float precision loss.
     charge = models.DecimalField(decimal_places=2, max_digits=15)
+
 
 # CallTariff represents the tariffs referring to a call in a certain
 # period of time

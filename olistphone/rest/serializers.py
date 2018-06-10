@@ -1,4 +1,4 @@
-from rest.models import CallRecord
+from rest.models import CallRecord, PhoneBill, CallTariff
 from rest_framework import serializers
 from collections import OrderedDict
 from rest_framework.fields import SkipField
@@ -46,3 +46,23 @@ class CallRecordSerializer(serializers.ModelSerializer):
                 ret[field.field_name] = representation
 
         return ret
+
+class PhoneBillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhoneBill
+        fields = (
+            'destination',
+            'start_timestamp',
+            'call_duration',
+            'charge'
+        )
+
+class CallTariffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CallTariff
+        fields = (
+            'base_tariff',
+            'minute_charge',
+            'discount_charge',
+            'valid_after'
+        )

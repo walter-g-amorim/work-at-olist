@@ -2,9 +2,9 @@ from itertools import groupby
 from dateutil.relativedelta import relativedelta
 from math import floor
 from rest.models import PhoneBill, CallTariff
-import json
 from decimal import *
 getcontext().prec = 2
+
 
 # Gets the call records and transforms them into bills.
 def calculate_bills(records):
