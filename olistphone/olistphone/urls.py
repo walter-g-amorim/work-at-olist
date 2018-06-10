@@ -19,14 +19,9 @@ from django.urls import path, include
 from rest_framework import routers
 from rest import views
 
-ROUTER = routers.DefaultRouter()
-ROUTER.register(r'users', views.UserViewSet)
-ROUTER.register(r'groups', views.GroupViewSet)
-ROUTER.register(r'records', views.CallRecordViewSet)
-
 urlpatterns = [
-    url(r'^', include(ROUTER.urls)),
     url(r'^api-auth/', include('rest_framework.urls',
                                namespace='rest_framework')),
+    url(r'records', views.CallRecordView.as_view()),
     path('admin/', admin.site.urls),
 ]
