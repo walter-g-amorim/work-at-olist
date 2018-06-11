@@ -20,15 +20,6 @@ phone_validator_regex = RegexValidator(
     + ' with 2 area code digits and 8 or 9 phone number digits.'
 )
 
-# We need this class for the 'source' and 'destination' fields,
-# since they are null for End records, but have a unique_together
-# restriction on both of them
-class NullableCharField(models.CharField):
-    def clean(self, value):
-        value = super(NullCharField, self).clean(value)
-        if value in forms.fields.EMPTY_VALUES:
-            return None
-        return value
 
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):
@@ -50,27 +41,23 @@ class CallRecord(models.Model):
     class Meta:
         # This makes it so we can have one Start record
         # and one End record with the same call_id, but never more than
-        # one of each, and also impossibilitates simultaneous calls.
+        # one of each
         unique_together = (
-            ('type', 'call_id'),
-            ('source', 'timestamp'),
-            ('destination', 'timestamp')
+            ('type', 'call_id')
         )
 
     # Source (caller) phone number.
     # Uses phone_validator_regex for validation
-    source = NullableCharField(
+    source = models.CharField(
         validators=[phone_validator_regex],
         max_length=11,
-        blank=True,
         null=True
     )
     # Destination (called) phone number.
     # Uses phone_validator_regex for validation
-    destination = NullableCharField(
+    destination = models.CharField(
         validators=[phone_validator_regex],
         max_length=11,
-        blank=True,
         null=True
     )
 
@@ -81,15 +68,41 @@ class CallRecord(models.Model):
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
-    
+   
     # We override the models.Model.save() method to ensure
     # we don't create a record where the source and destination
-    # numbers are the same
+    # numbers are the same, and to enforce not creating any
+    # invalid parallel calls from a single source or destination
     def save(self, *args, **kwargs):
-        if self.source == self.destination:
-            raise ValidationError(
-                'Cannot create a call where source is the same as destination.'
+        if self.source is not None:
+            if self.source == self.destination:
+                raise ValidationError(
+                    'Cannot create a call where source is the same as \
+                    the destination.'
+                )
+            conflicts = CallRecord.objects.filter(
+                source=self.source,
+                timestamp=self.timestamp
             )
+            if self.id is not None:
+                conflicts = conflicts.exclude(pk=self.id)
+            if conflicts.exists():
+                raise ValidationError(
+                    'Cannot create a call when there is already a record for \
+                    this source and timestamp'
+                )
+        if self.destination is not None:
+            conflicts = CallRecord.objects.filter(
+                destination=self.destination,
+                timestamp=self.timestamp
+            )
+            if self.id is not None:
+                conflicts = conflicts.exclude(pk=self.id)
+            if conflicts.exists():
+                raise ValidationError(
+                    'Cannot create a call when there is already a record for \
+                    this destination and timestamp'
+                )
         super(CallRecord, self).save(*args, **kwargs)
 
 
