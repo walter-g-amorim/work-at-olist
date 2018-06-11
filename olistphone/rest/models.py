@@ -20,6 +20,15 @@ phone_validator_regex = RegexValidator(
     + ' with 2 area code digits and 8 or 9 phone number digits.'
 )
 
+# We need this class for the 'source' and 'destination' fields,
+# since they are null for End records, but have a unique_together
+# restriction on both of them
+class NullableCharField(models.CharField):
+    def clean(self, value):
+        value = super(NullCharField, self).clean(value)
+        if value in forms.fields.EMPTY_VALUES:
+            return None
+        return value
 
 # CallRecord models the start and end of a phone call
 class CallRecord(models.Model):
@@ -41,12 +50,16 @@ class CallRecord(models.Model):
     class Meta:
         # This makes it so we can have one Start record
         # and one End record with the same call_id, but never more than
-        # one of each
-        unique_together = ['type', 'call_id']
+        # one of each, and also impossibilitates simultaneous calls.
+        unique_together = (
+            ('type', 'call_id'),
+            ('source', 'timestamp'),
+            ('destination', 'timestamp')
+        )
 
     # Source (caller) phone number.
     # Uses phone_validator_regex for validation
-    source = models.CharField(
+    source = NullableCharField(
         validators=[phone_validator_regex],
         max_length=11,
         blank=True,
@@ -54,7 +67,7 @@ class CallRecord(models.Model):
     )
     # Destination (called) phone number.
     # Uses phone_validator_regex for validation
-    destination = models.CharField(
+    destination = NullableCharField(
         validators=[phone_validator_regex],
         max_length=11,
         blank=True,
@@ -68,6 +81,16 @@ class CallRecord(models.Model):
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
+    
+    # We override the models.Model.save() method to ensure
+    # we don't create a record where the source and destination
+    # numbers are the same
+    def save(self, *args, **kwargs):
+        if self.source == self.destination:
+            raise ValidationError(
+                'Cannot create a call where source is the same as destination.'
+            )
+        super(CallRecord, self).save(*args, **kwargs)
 
 
 # PhoneBill represents a single billing of a pair of call records

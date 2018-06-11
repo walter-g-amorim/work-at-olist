@@ -19,9 +19,12 @@ from django.urls import path, include
 from rest import views
 
 urlpatterns = [
-    url(r'^api-auth/', include('rest_framework.urls',
+    path(r'api-auth/', include('rest_framework.urls',
                                namespace='rest_framework')),
-    url(r'records/', views.CallRecordView.as_view()),
-    url(r'records/<string:phone_number>', views.CallRecordView.as_view()),
+    path(r'records/', views.CallRecordView.as_view()),
+    path(r'billing/<str:phone_number>/',
+         views.MonthlyBillingView.as_view()),
+    path(r'billing/<str:phone_number>/<str:year_month>/',
+         views.MonthlyBillingView.as_view()),
     path('admin/', admin.site.urls),
 ]

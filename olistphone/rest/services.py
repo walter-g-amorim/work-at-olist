@@ -2,8 +2,11 @@ from itertools import groupby
 from dateutil.relativedelta import relativedelta
 from math import floor
 from rest.models import PhoneBill, CallTariff
+from django.utils import dateparse, timezone
+from datetime import datetime
 from decimal import *
 getcontext().prec = 2
+
 
 
 # Gets the call records and transforms them into bills.
@@ -116,3 +119,93 @@ def calculate_pricing(start, end, call_tariff):
             break
     tariff += call_tariff.base_tariff
     return tariff
+
+def get_last_month():
+    reference_start = timezone.now().replace(
+        day=1,
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0
+    )+relativedelta(months=-1)
+    reference_end = timezone.now().replace(
+        day=1,
+        hour=23,
+        minute=59,
+        second=59,
+        microsecond=0
+    )+relativedelta(days=-1)
+    return reference_start, reference_end
+
+def parse_month_year(date_string):
+    date = dateparse.parse_date(date_string)
+    if date is not None:
+        return get_monthly_period(date)
+    date = dateparse.parse_datetime(date_string)
+    if date is not None:
+        return get_monthly_period(date)
+    return parse_obscure_formats(date_string)
+
+
+def parse_obscure_formats(date_string):
+    # Try to parse dates in which only the month is passed
+    # This assumes that the year is the current one
+    try:
+        # Try the number format first...
+        date = datetime.strptime(date_string, "%m")
+        date = date.replace(year=timezone.now().year)
+        return get_monthly_period(date)
+    except ValueError:
+        date = None
+    try:
+        # ... then the shorthand letter format
+        date = datetime.strptime(date_string, "%b")
+        date = date.replace(year=timezone.now().year)
+        return get_monthly_period(date)
+    except ValueError:
+        date = None
+    # Try to parse dates in the "06-1994" format
+    try:
+        date = datetime.strptime(date_string, "%m-%Y")
+        return get_monthly_period(date)
+    except ValueError:
+        date = None
+    # Try to parse dates in the "Jun-1994" format
+    try:
+        date = datetime.strptime(date_string, "%b-%Y")
+        return get_monthly_period(date)
+    except ValueError:
+        date = None
+    # Try to parse dates in the "1994-Jun" format
+    try:
+        date = datetime.strptime(date_string, "%Y-%b")
+        return get_monthly_period(date)
+    except ValueError:
+        date = None
+    # Try to parse dates in the "Jun1994" format
+    try:
+        date = datetime.strptime(date_string, "%b%Y")
+        return get_monthly_period(date)
+    except ValueError:
+        date = None
+    # Couldn't parse the string
+    if date is None:
+        raise ValueError
+
+
+def get_monthly_period(date):
+    reference_start = date.replace(
+        day=1,
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0
+    )
+    reference_end = date.replace(
+        day=1,
+        hour=23,
+        minute=59,
+        second=59,
+        microsecond=0
+    )+relativedelta(months=1, days=-1)
+    return reference_start, reference_end
