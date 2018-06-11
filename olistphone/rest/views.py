@@ -1,4 +1,5 @@
 from rest.models import CallRecord
+from django.core.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
@@ -18,7 +19,10 @@ class CallRecordView(APIView):
             is_valid = serializer.is_valid()
             if not is_valid:
                 return Response(serializer.errors, status=400)
-            serializer.save()
+            try:
+                serializer.save()
+            except ValidationError as err:
+                return Response(data=err, status=400)
             return Response(status=201)
         return Response(status=400)
 
@@ -77,6 +81,9 @@ class MonthlyBillingView(APIView):
                 ]
             )
         )
+        calls_by_this_source = calls_by_this_source.order_by('call_id')
+        #serializer=CallRecordSerializer(data=calls_by_this_source, many=True)
+        #serializer.is_valid()
         bills = services.calculate_bills(calls_by_this_source)
         serializer = PhoneBillSerializer(bills, many=True)
         return Response(serializer.data)

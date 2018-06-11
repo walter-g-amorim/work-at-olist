@@ -41,9 +41,12 @@ class CallRecord(models.Model):
     class Meta:
         # This makes it so we can have one Start record
         # and one End record with the same call_id, but never more than
-        # one of each
+        # one of each.
+        # Additionally, we can prevent repeated records by checking
+        # the call_id and timestamp
         unique_together = (
-            ('type', 'call_id')
+            ('type', 'call_id'),
+            ('call_id', 'timestamp')
         )
 
     # Source (caller) phone number.
@@ -68,41 +71,109 @@ class CallRecord(models.Model):
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
+    
+    def validate_source_and_destination(self):
+        if self.source is not None:
+            if self.destination is None:
+                raise ValidationError(
+                    'Cannot create a call with source and no destination'
+                )
+            if self.source == self.destination:
+                raise ValidationError(
+                    'Cannot create a call where source is the same as' \
+                    + ' the destination.'
+                )
+        elif self.destination is not None:
+            if self.source is None:
+                raise ValidationError(
+                    'Cannot create a call with destination and no source'
+                )
+
+    def validate_source_and_timestamp(self):
+        if self.source is not None:
+            conflict = CallRecord.objects.filter(
+                source=self.source,
+                timestamp=self.timestamp
+            )
+            if self.id is not None:
+                conflict = conflict.exclude(pk=self.id)
+            if conflict.exists():
+                raise ValidationError(
+                    'Cannot create a call when there is already a record for' \
+                    + ' this source and timestamp'
+                )
+
+    def validate_destination_and_timestamp(self):
+        if self.destination is not None:
+            conflict = CallRecord.objects.filter(
+                destination=self.destination,
+                timestamp=self.timestamp
+            )
+            if self.id is not None:
+                conflict = conflict.exclude(pk=self.id)
+            if conflict.exists():
+                raise ValidationError(
+                    'Cannot create a call when there is already a record for' \
+                    + ' this destination and timestamp'
+                )
+
+    def validate_call_id(self):
+        if self.type == 'E':
+            start = CallRecord.objects.filter(
+                type='S',
+                call_id=self.call_id
+            )
+            if not start.exists():
+                raise ValidationError(
+                    'Cannot create an end call report with no previous' \
+                    + ' start call report (no start report with this call ID)'
+                )
+
+    def validate_overlap(self):
+        if self.type == 'S':
+            started_calls = CallRecord.objects.filter(
+                source=self.source,
+                type='S',
+                timestamp__lte=self.timestamp
+            )
+            ended_calls = CallRecord.objects.filter(
+                call_id__in=[call.call_id for call in started_calls],
+                type='E',
+            )
+            conflict = ended_calls.filter(
+                timestamp__gte=self.timestamp
+            )
+            if conflict.exists():
+                raise ValidationError(
+                    'Cannot create a start call report when there is an' \
+                    + ' end call report with a later timestamp for the' \
+                    + ' same source'
+                )
+            unended_calls = started_calls.exclude(
+                call_id__in=[call.call_id for call in ended_calls]
+            )
+            if unended_calls.exists():
+                raise ValidationError(
+                    'Cannot create a start call report when there is an' \
+                    + ' unfinished call report for the same source' \
+                    + ' (Unpaired call_id)'
+                )
+            
+
+    def validate_save(self):
+        self.validate_source_and_destination()
+        self.validate_source_and_timestamp()
+        self.validate_destination_and_timestamp()
+        self.validate_call_id()
+        self.validate_overlap()
+        
  
     # We override the models.Model.save() method to ensure
     # we don't create a record where the source and destination
     # numbers are the same, and to enforce not creating any
     # invalid parallel calls from a single source or destination
     def save(self, *args, **kwargs):
-        if self.source is not None:
-            if self.source == self.destination:
-                raise ValidationError(
-                    'Cannot create a call where source is the same as \
-                    the destination.'
-                )
-            conflicts = CallRecord.objects.filter(
-                source=self.source,
-                timestamp=self.timestamp
-            )
-            if self.id is not None:
-                conflicts = conflicts.exclude(pk=self.id)
-            if conflicts.exists():
-                raise ValidationError(
-                    'Cannot create a call when there is already a record for \
-                    this source and timestamp'
-                )
-        if self.destination is not None:
-            conflicts = CallRecord.objects.filter(
-                destination=self.destination,
-                timestamp=self.timestamp
-            )
-            if self.id is not None:
-                conflicts = conflicts.exclude(pk=self.id)
-            if conflicts.exists():
-                raise ValidationError(
-                    'Cannot create a call when there is already a record for \
-                    this destination and timestamp'
-                )
+        self.validate_save()
         super(CallRecord, self).save(*args, **kwargs)
 
 

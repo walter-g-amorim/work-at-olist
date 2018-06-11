@@ -12,7 +12,7 @@ getcontext().prec = 2
 def calculate_bills(records):
     calls = groupby(records, lambda call: call.call_id)
     bills = []
-    for _, call_records in calls:
+    for key, call_records in calls:
         start = ""
         end = ""
         destination = ""
@@ -31,6 +31,7 @@ def calculate_bills(records):
             tariff = CallTariff.objects.filter(
                 valid_after__lte=start
             ).order_by('-valid_after')[0]
+            print("START: {} END: {}".format(start, end))
             charge = calculate_pricing(start, end, tariff)
             duration = calculate_time_delta(start, end)
             bill = PhoneBill(

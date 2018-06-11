@@ -83,6 +83,13 @@ class CallRecordTests(TestCase):
         )
 
     def test_end_record_must_have_no_numbers(self):
+        record = create_record(
+            type='S',
+            timestamp=timezone.now(),
+            call_id=40,
+            source='2199999999',
+            destination='41000000000'
+        )
         good_record = create_record(
             type='E',
             timestamp=timezone.now(),
@@ -90,6 +97,13 @@ class CallRecordTests(TestCase):
         )
         self.assertIsNotNone(good_record)
         self.assertIsInstance(good_record, CallRecord)
+        record = create_record(
+            type='S',
+            timestamp=timezone.now(),
+            call_id=41,
+            source='2199999999',
+            destination='41000000000'
+        )
         bad_record = create_record(
             type='E',
             timestamp=timezone.now(),
