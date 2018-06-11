@@ -35,9 +35,9 @@ def calculate_bills(records):
             except IndexError:
                 tariff = CallTariff(
                     valid_after=timezone.now().replace(year=1900),
-                    base_tariff=Decimal(0.36),
-                    minute_charge=Decimal(0.09),
-                    discount_charge=Decimal(0.00)
+                    base_tariff=Decimal('0.36'),
+                    minute_charge=Decimal('0.09'),
+                    discount_charge=Decimal('0.00')
                 )
                 tariff.save()
             charge = calculate_pricing(start, end, tariff)

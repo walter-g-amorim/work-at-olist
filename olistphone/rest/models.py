@@ -1,6 +1,8 @@
 from django.db import models
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 from django.core.exceptions import ValidationError
+from decimal import *
+getcontext().prec = 2
 
 # Enumeration makes further modifications, if necessary, easier
 RECORD_TYPES = (
@@ -34,7 +36,11 @@ class CallRecord(models.Model):
     timestamp = models.DateTimeField()
 
     # Unique-pair call ID.
-    call_id = models.PositiveIntegerField()
+    # MinValueValidator is included due to SQLite not verifying
+    # for negative numbers even with PositiveIntegerField
+    call_id = models.PositiveIntegerField(
+        validators=[MinValueValidator(0)]
+    )
 
     # Since call_id is not unique, but a unique-pair, we need to define
     # a combination of fields for uniqueness
@@ -67,7 +73,7 @@ class CallRecord(models.Model):
     # Additional validation for the record model
     # If we are creating a End Call Record, it should not have any
     # phone numbers stored.
-    def clean(self):
+    def validate_end_record_with_numbers(self):
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
@@ -158,20 +164,36 @@ class CallRecord(models.Model):
                     + ' unfinished call report for the same source' \
                     + ' (Unpaired call_id)'
                 )
-            
+           
+    def validate_end_call_timestamp(self):
+        if self.type == 'E':
+            started_call = CallRecord.objects.get(
+                call_id=self.call_id,
+                type='S'
+            )
+            if self.timestamp <= started_call.timestamp:
+                raise ValidationError(
+                    'The end call record timestamp cannot be a period in' \
+                    + ' time which comes before the start call period'
+                )
+
+    def validate_numbers(self):
+        if self.type == 'S':
+            self.clean_fields()
 
     def validate_save(self):
+        self.validate_numbers()
+        self.validate_end_record_with_numbers()
         self.validate_source_and_destination()
         self.validate_source_and_timestamp()
         self.validate_destination_and_timestamp()
         self.validate_call_id()
+        self.validate_end_call_timestamp()
         self.validate_overlap()
-        
- 
+
     # We override the models.Model.save() method to ensure
-    # we don't create a record where the source and destination
-    # numbers are the same, and to enforce not creating any
-    # invalid parallel calls from a single source or destination
+    # we don't create a record in which there are invalid or
+    # inconsistent fields, using the custom validation methods
     def save(self, *args, **kwargs):
         self.validate_save()
         super(CallRecord, self).save(*args, **kwargs)
@@ -190,11 +212,26 @@ class PhoneBill(models.Model):
     start_timestamp = models.DateTimeField()
 
     # The duration of the call in seconds.
-    call_duration = models.PositiveIntegerField()
+    # MinValueValidator is included due to SQLite not verifying
+    # for negative numbers even with PositiveIntegerField
+    call_duration = models.PositiveIntegerField(
+        validators=[MinValueValidator(0)]
+    )
 
     # The full value charge of the phone call.
     # Using DecimalFields to avoid float precision loss.
-    charge = models.DecimalField(decimal_places=2, max_digits=15)
+    charge = models.DecimalField(
+        decimal_places=2,
+        max_digits=15,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
+
+    # We override the models.Model.save() method to ensure
+    # we don't create a record in which there are invalid or
+    # inconsistent fields
+    def save(self, *args, **kwargs):
+        self.clean_fields()
+        super(PhoneBill, self).save(*args, **kwargs)
 
 
 # CallTariff represents the tariffs referring to a call in a certain
@@ -202,14 +239,41 @@ class PhoneBill(models.Model):
 class CallTariff(models.Model):
 
     # Base flat charge for all calls
-    base_tariff = models.DecimalField(decimal_places=2, max_digits=15)
+    base_tariff = models.DecimalField(
+        decimal_places=2,
+        max_digits=15,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
 
     # Tariff added per full minute in the normal time period
-    minute_charge = models.DecimalField(decimal_places=2, max_digits=15)
+    minute_charge = models.DecimalField(
+        decimal_places=2,
+        max_digits=15,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
 
     # Tariff added per full minute in the discounted time period
-    discount_charge = models.DecimalField(decimal_places=2, max_digits=15)
+    discount_charge = models.DecimalField(
+        decimal_places=2,
+        max_digits=15,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
 
     # This tariff applies to everything after this date and before
     # the next tariff's valid_after field
     valid_after = models.DateField()
+
+    def validate_discount(self):
+        if self.discount_charge > self.minute_charge:
+            raise ValidationError(
+                'Cannot create a tariff where the discount charge is greater' \
+                + ' than the minute charge'
+            )
+
+    # We override the models.Model.save() method to ensure
+    # we don't create a record in which there are invalid or
+    # inconsistent fields
+    def save(self, *args, **kwargs):
+        self.clean_fields()
+        self.validate_discount()
+        super(CallTariff, self).save(*args, **kwargs)

@@ -4,7 +4,7 @@ from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from rest.models import CallTariff, PhoneBill
-from rest.test_models import create_record
+from rest.test_models import create_record, create_bill
 from decimal import *
 getcontext().prec = 2
 
@@ -13,9 +13,9 @@ class CallRecordServiceTests(TestCase):
 
     def setUp(self):
         self.call_tariff = CallTariff.objects.create(
-            base_tariff=Decimal(0.36),
-            minute_charge=Decimal(0.09),
-            discount_charge=Decimal(0),
+            base_tariff=Decimal('0.36'),
+            minute_charge=Decimal('0.09'),
+            discount_charge=Decimal('0.00'),
             valid_after=timezone.now().replace(
                 day=27,
                 month=6,
@@ -38,7 +38,7 @@ class CallRecordServiceTests(TestCase):
             destination='41000000000'
         )
         self.records.append(record)
-        bill = PhoneBill(
+        bill = create_bill(
             destination=record.destination,
             start_timestamp=time_start,
             call_duration=(time_end-time_start).seconds,
@@ -47,7 +47,6 @@ class CallRecordServiceTests(TestCase):
                 + (2*self.call_tariff.minute_charge)
             )
         )
-        bill.save()
         self.bills.append(bill)
         self.records.append(record)
         record = create_record(
@@ -69,7 +68,7 @@ class CallRecordServiceTests(TestCase):
             source='2199999999',
             destination='41000000000'
         )
-        bill = PhoneBill(
+        bill = create_bill(
             destination=record.destination,
             start_timestamp=time_start,
             call_duration=(time_end-time_start).seconds,
@@ -78,7 +77,6 @@ class CallRecordServiceTests(TestCase):
                 + (2*self.call_tariff.minute_charge)
             )
         )
-        bill.save()
         self.bills.append(bill)
         self.records.append(record)
         record = create_record(
@@ -100,7 +98,7 @@ class CallRecordServiceTests(TestCase):
             source='2199999999',
             destination='41000000000'
         )
-        bill = PhoneBill(
+        bill = create_bill(
             destination=record.destination,
             start_timestamp=time_start,
             call_duration=(time_end-time_start).seconds,
@@ -109,7 +107,6 @@ class CallRecordServiceTests(TestCase):
                 + (2*self.call_tariff.discount_charge)
             )
         )
-        bill.save()
         self.bills.append(bill)
         self.records.append(record)
         record = create_record(
