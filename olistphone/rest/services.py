@@ -12,7 +12,7 @@ getcontext().prec = 2
 def calculate_bills(records):
     calls = groupby(records, lambda call: call.call_id)
     bills = []
-    for key, call_records in calls:
+    for _, call_records in calls:
         start = ""
         end = ""
         destination = ""
@@ -28,16 +28,24 @@ def calculate_bills(records):
                 start_timestamp=start
             )
         except PhoneBill.DoesNotExist:
-            tariff = CallTariff.objects.filter(
-                valid_after__lte=start
-            ).order_by('-valid_after')[0]
-            print("START: {} END: {}".format(start, end))
+            try:
+                tariff = CallTariff.objects.filter(
+                    valid_after__lte=start
+                ).order_by('-valid_after')[0]
+            except IndexError:
+                tariff = CallTariff(
+                    valid_after=timezone.now().replace(year=1900),
+                    base_tariff=Decimal(0.36),
+                    minute_charge=Decimal(0.09),
+                    discount_charge=Decimal(0.00)
+                )
+                tariff.save()
             charge = calculate_pricing(start, end, tariff)
             duration = calculate_time_delta(start, end)
             bill = PhoneBill(
                 destination=destination,
                 start_timestamp=start,
-                call_duration=duration.seconds,
+                call_duration=duration.total_seconds(),
                 charge=charge
             )
             bill.save()

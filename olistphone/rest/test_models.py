@@ -3,6 +3,7 @@ from rest.models import CallRecord
 from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
+from dateutil.relativedelta import relativedelta
 
 
 def create_record(
@@ -83,30 +84,31 @@ class CallRecordTests(TestCase):
         )
 
     def test_end_record_must_have_no_numbers(self):
-        record = create_record(
+        time = timezone.now()
+        _ = create_record(
             type='S',
-            timestamp=timezone.now(),
+            timestamp=time,
             call_id=40,
             source='2199999999',
             destination='41000000000'
         )
         good_record = create_record(
             type='E',
-            timestamp=timezone.now(),
+            timestamp=time+relativedelta(minutes=2),
             call_id=40,
         )
         self.assertIsNotNone(good_record)
         self.assertIsInstance(good_record, CallRecord)
-        record = create_record(
+        _ = create_record(
             type='S',
-            timestamp=timezone.now(),
+            timestamp=time+relativedelta(minutes=3),
             call_id=41,
             source='2199999999',
             destination='41000000000'
         )
         bad_record = create_record(
             type='E',
-            timestamp=timezone.now(),
+            timestamp=time+relativedelta(minutes=5),
             call_id=41,
             source='2199999999',
             destination='41000000000'
@@ -114,9 +116,10 @@ class CallRecordTests(TestCase):
         self.assertRaises(ValidationError, bad_record.clean)
 
     def test_record_uniqueness(self):
+        time = timezone.now()
         record1 = create_record(
             type='S',
-            timestamp=timezone.now(),
+            timestamp=time,
             call_id=40,
             source='2199999999',
             destination='41000000000'
@@ -125,7 +128,7 @@ class CallRecordTests(TestCase):
         self.assertIsInstance(record1, CallRecord)
         record2 = create_record(
             type='E',
-            timestamp=timezone.now(),
+            timestamp=time+relativedelta(minutes=2),
             call_id=40,
         )
         self.assertIsNotNone(record2)
@@ -134,7 +137,7 @@ class CallRecordTests(TestCase):
             IntegrityError,
             create_record,
             type='S',
-            timestamp=timezone.now(),
+            timestamp=time+relativedelta(minutes=4),
             call_id=40,
             source='2112349999',
             destination='41111000000'
