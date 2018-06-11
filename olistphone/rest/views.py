@@ -3,8 +3,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from django.utils import timezone
-from dateutil.relativedelta import relativedelta
 import rest.services as services
 from rest.serializers import CallRecordSerializer, PhoneBillSerializer
 import re
@@ -23,6 +21,7 @@ class CallRecordView(APIView):
             serializer.save()
             return Response(status=201)
         return Response(status=400)
+
 
 class MonthlyBillingView(APIView):
     renderer_classes = (JSONRenderer, )

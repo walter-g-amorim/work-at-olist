@@ -68,7 +68,7 @@ class CallRecord(models.Model):
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
-   
+ 
     # We override the models.Model.save() method to ensure
     # we don't create a record where the source and destination
     # numbers are the same, and to enforce not creating any

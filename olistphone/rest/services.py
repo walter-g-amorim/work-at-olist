@@ -8,7 +8,6 @@ from decimal import *
 getcontext().prec = 2
 
 
-
 # Gets the call records and transforms them into bills.
 def calculate_bills(records):
     calls = groupby(records, lambda call: call.call_id)
@@ -120,6 +119,7 @@ def calculate_pricing(start, end, call_tariff):
     tariff += call_tariff.base_tariff
     return tariff
 
+
 def get_last_month():
     reference_start = timezone.now().replace(
         day=1,
@@ -136,6 +136,7 @@ def get_last_month():
         microsecond=0
     )+relativedelta(days=-1)
     return reference_start, reference_end
+
 
 def parse_month_year(date_string):
     date = dateparse.parse_date(date_string)

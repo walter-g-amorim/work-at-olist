@@ -47,6 +47,7 @@ class CallRecordSerializer(serializers.ModelSerializer):
 
         return ret
 
+
 class PhoneBillSerializer(serializers.ModelSerializer):
     class Meta:
         model = PhoneBill
@@ -56,6 +57,7 @@ class PhoneBillSerializer(serializers.ModelSerializer):
             'call_duration',
             'charge'
         )
+
 
 class CallTariffSerializer(serializers.ModelSerializer):
     class Meta:
