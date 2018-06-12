@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'fbnxchi55gg^ys2#@isol7q&&eg35gedj)wi!lem&w)lhy$asw'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -120,9 +120,3 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
-CONFIG = {
-    'BASE_TARIFF': 0.36,
-    'MINUTE_CHARGE': 0.09,
-    'DISCOUNT_CHARGE': 0,
-}
