@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath olistphone/ olistphone.wsgi --log-file -
+web: gunicorn --pythonpath olistphone/ olistphone.heroku_wsgi --log-file -
