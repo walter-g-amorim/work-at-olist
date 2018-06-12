@@ -25,7 +25,7 @@ There is a `makefile` bundled with this project to facilitate execution.
 Additionally, there is a dump of the populated database in the `db_dump.json`.
 
 ## API Reference
-###`/record/`
+### /record/
 Route for sending call record data.
 *Methods allowed: `POST`
 *Usage: `POST /record/` with a `Content-Type: application/json` header.
@@ -40,7 +40,7 @@ Route for sending call record data.
 }
 ```
 *Returns: Code `201 Created` with no body if successful.
-###`/billing/`
+### /billing/
 Route for retrieving phone bill data.
 *Methods allowed: `GET`
 *Usage: `GET /billing/[subscriber_number]/` to get data referring to the last closed period or `GET /billing/[subscriber_number]/[month-year]/` for a specific period.
