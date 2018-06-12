@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath olistphone --log-file -
+web: gunicorn --pythonpath olistphone wsgi --log-file -
