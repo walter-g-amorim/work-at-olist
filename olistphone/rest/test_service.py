@@ -3,7 +3,7 @@ import rest.services as services
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
-from rest.models import CallTariff, PhoneBill
+from rest.models import CallTariff
 from rest.test_models import create_record, create_bill
 from decimal import *
 getcontext().prec = 2

@@ -23,6 +23,7 @@ def create_record(
         destination=destination
     )
 
+
 def create_bill(
         destination=None,
         start_timestamp=None,
@@ -34,6 +35,7 @@ def create_bill(
         call_duration=call_duration,
         charge=charge
     )
+
 
 def create_tariff(
         valid_after=None,
@@ -249,6 +251,7 @@ class CallRecordTests(TestCase):
             destination='41111000000'
         )
 
+
 class PhoneBillTest(TestCase):
 
     def test_create_new_bill(self):
@@ -328,6 +331,7 @@ class PhoneBillTest(TestCase):
             destination='41000000000',
             charge=Decimal('-0.36')
         )
+
 
 class CallTariffTests(TestCase):
 

@@ -77,7 +77,7 @@ class CallRecord(models.Model):
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
-    
+
     def validate_source_and_destination(self):
         if self.source is not None:
             if self.destination is None:
@@ -86,7 +86,7 @@ class CallRecord(models.Model):
                 )
             if self.source == self.destination:
                 raise ValidationError(
-                    'Cannot create a call where source is the same as' \
+                    'Cannot create a call where source is the same as'
                     + ' the destination.'
                 )
         elif self.destination is not None:
@@ -105,7 +105,7 @@ class CallRecord(models.Model):
                 conflict = conflict.exclude(pk=self.id)
             if conflict.exists():
                 raise ValidationError(
-                    'Cannot create a call when there is already a record for' \
+                    'Cannot create a call when there is already a record for'
                     + ' this source and timestamp'
                 )
 
@@ -119,7 +119,7 @@ class CallRecord(models.Model):
                 conflict = conflict.exclude(pk=self.id)
             if conflict.exists():
                 raise ValidationError(
-                    'Cannot create a call when there is already a record for' \
+                    'Cannot create a call when there is already a record for'
                     + ' this destination and timestamp'
                 )
 
@@ -131,7 +131,7 @@ class CallRecord(models.Model):
             )
             if not start.exists():
                 raise ValidationError(
-                    'Cannot create an end call report with no previous' \
+                    'Cannot create an end call report with no previous'
                     + ' start call report (no start report with this call ID)'
                 )
 
@@ -151,8 +151,8 @@ class CallRecord(models.Model):
             )
             if conflict.exists():
                 raise ValidationError(
-                    'Cannot create a start call report when there is an' \
-                    + ' end call report with a later timestamp for the' \
+                    'Cannot create a start call report when there is an'
+                    + ' end call report with a later timestamp for the'
                     + ' same source'
                 )
             unended_calls = started_calls.exclude(
@@ -160,11 +160,11 @@ class CallRecord(models.Model):
             )
             if unended_calls.exists():
                 raise ValidationError(
-                    'Cannot create a start call report when there is an' \
-                    + ' unfinished call report for the same source' \
+                    'Cannot create a start call report when there is an'
+                    + ' unfinished call report for the same source'
                     + ' (Unpaired call_id)'
                 )
-           
+
     def validate_end_call_timestamp(self):
         if self.type == 'E':
             started_call = CallRecord.objects.get(
@@ -173,7 +173,7 @@ class CallRecord(models.Model):
             )
             if self.timestamp <= started_call.timestamp:
                 raise ValidationError(
-                    'The end call record timestamp cannot be a period in' \
+                    'The end call record timestamp cannot be a period in'
                     + ' time which comes before the start call period'
                 )
 
@@ -266,7 +266,7 @@ class CallTariff(models.Model):
     def validate_discount(self):
         if self.discount_charge > self.minute_charge:
             raise ValidationError(
-                'Cannot create a tariff where the discount charge is greater' \
+                'Cannot create a tariff where the discount charge is greater'
                 + ' than the minute charge'
             )
 

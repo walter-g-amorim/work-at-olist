@@ -82,8 +82,6 @@ class MonthlyBillingView(APIView):
             )
         )
         calls_by_this_source = calls_by_this_source.order_by('call_id')
-        #serializer=CallRecordSerializer(data=calls_by_this_source, many=True)
-        #serializer.is_valid()
         bills = services.calculate_bills(calls_by_this_source)
         serializer = PhoneBillSerializer(data=bills, many=True)
         serializer.is_valid()
