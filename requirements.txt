@@ -1,4 +1,4 @@
--r local_requirements.txt
+-r local-requirements.txt
 
 pipenv==2018.5.18
 psycopg2==2.7.4
