@@ -1,9 +1,9 @@
-test:
-	@echo Preparing to run tests for the "rest" app...
-	@python olistphone/manage.py test rest
 run:
 	@echo Running server at localhost:8000
 	@python olistphone/manage.py runserver
+test:
+	@echo Preparing to run tests for the "rest" app...
+	@python olistphone/manage.py test rest
 migrate:
 	@echo Creating necessary migrations...
 	@python olistphone/manage.py makemigrations
