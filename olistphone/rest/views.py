@@ -83,10 +83,15 @@ class MonthlyBillingView(APIView):
         )
         calls_by_this_source = calls_by_this_source.order_by('call_id')
         bills = services.calculate_bills(calls_by_this_source)
+        reference_period = "{}/{}".format(
+            last_reference_start.month,
+            last_reference_start.year
+        )
         serializer = PhoneBillSerializer(data=bills, many=True)
         serializer.is_valid()
         return_data = {
             "subscriber": phone_number,
+            "reference_period": reference_period,
             "billed_calls": serializer.data
         }
         return Response(return_data)
