@@ -17,19 +17,19 @@ and run the migration command.
 ## How to run and functionalities
 There is a `makefile` bundled with this project to facilitate execution.
 
-*Running the Server: `make run`
-*Run Unit Tests: `make test`
-*Run Migrations (if you deleted the database): `make migrate`
-*Open Django Shell: `make shell`
+* Running the Server: `make run`
+* Run Unit Tests: `make test`
+* Run Migrations (if you deleted the database): `make migrate`
+* Open Django Shell: `make shell`
 
 Additionally, there is a dump of the populated database in the `db_dump.json`.
 
 ## API Reference
 ### /record/
 Route for sending call record data.
-*Methods allowed: `POST`
-*Usage: `POST /record/` with a `Content-Type: application/json` header.
-*JSON format:
+* Methods allowed: `POST`
+* Usage: `POST /record/` with a `Content-Type: application/json` header.
+* JSON format:
 ```
 {
   "type": "S" for start call records or "E" for end call records,
@@ -39,13 +39,12 @@ Route for sending call record data.
   "destination": Required for type "S", disallowed for "E". A 10 to 11 digit string representing the destination phone number
 }
 ```
-*Returns: Code `201 Created` with no body if successful.
+* Returns: Code `201 Created` with no body if successful.
 ### /billing/
 Route for retrieving phone bill data.
-*Methods allowed: `GET`
-*Usage: `GET /billing/[subscriber_number]/` to get data referring to the last closed period or `GET /billing/[subscriber_number]/[month-year]/` for a specific period.
-*Returns: Code `200 OK` with body containing a JSON string.
-*JSON format:
+* Methods allowed: `GET`
+* Usage: `GET /billing/[subscriber_number]/` to get data referring to the last closed period or `GET /billing/[subscriber_number]/[month-year]/` for a specific period.
+* JSON format:
 ```
 {
   "subscriber": A 10 to 11 digit string. The requested subscriber's phone number,
@@ -53,10 +52,11 @@ Route for retrieving phone bill data.
   "billed_calls": A list of phone bills referring to the requested period
 }
 ```
+* Returns: Code `200 OK` with body containing a JSON string.
 ## Model Reference
 ### Call Record
 Model referring to a call record, to be received through the `/record/` route.
-*JSON format:
+* JSON format:
 ```
 {
   "type": "S" for start call records or "E" for end call records,
@@ -68,7 +68,7 @@ Model referring to a call record, to be received through the `/record/` route.
 ```
 ### Phone Bill
 The model contained in the "billed_calls" attribute of the `/billing/` route response.
-*JSON format:
+* JSON format:
 ```
 {
   "destination": A 10 to 11 digit string representing the destination phone number,
@@ -80,7 +80,7 @@ The model contained in the "billed_calls" attribute of the `/billing/` route res
 
 ### Call Tariff
 Internal-use model that defines the call tariffs to be used in the Phone Bill calculations.
-*Model format:
+* Model format:
 ```
 base_tariff: A DecimalField representing the base tariff for any call,
 minute_charge: A DecimalField representing the usual charge per minute,
