@@ -85,5 +85,10 @@ class MonthlyBillingView(APIView):
         #serializer=CallRecordSerializer(data=calls_by_this_source, many=True)
         #serializer.is_valid()
         bills = services.calculate_bills(calls_by_this_source)
-        serializer = PhoneBillSerializer(bills, many=True)
-        return Response(serializer.data)
+        serializer = PhoneBillSerializer(data=bills, many=True)
+        serializer.is_valid()
+        return_data = {
+            "subscriber": phone_number,
+            "billed_calls": serializer.data
+        }
+        return Response(return_data)
