@@ -74,11 +74,19 @@ class CallRecord(models.Model):
     # If we are creating a End Call Record, it should not have any
     # phone numbers stored.
     def validate_end_record_with_numbers(self):
+        '''
+        Validates end call records have no source or destination numbers
+        in its structure
+        '''
         if ((self.source or self.destination is not None) and
                 self.type == 'E'):
             raise ValidationError('End records must not have numbers.')
 
     def validate_source_and_destination(self):
+        '''
+        Validates that call records cannot have the same source and
+        destination, or one of these fields and not the other
+        '''
         if self.source is not None:
             if self.destination is None:
                 raise ValidationError(
@@ -96,6 +104,10 @@ class CallRecord(models.Model):
                 )
 
     def validate_source_and_timestamp(self):
+        '''
+        Validates the uniqueness between a call's source and timestamp
+        i.e. a person cannot call two people at once
+        '''
         if self.source is not None:
             conflict = CallRecord.objects.filter(
                 source=self.source,
@@ -110,6 +122,10 @@ class CallRecord(models.Model):
                 )
 
     def validate_destination_and_timestamp(self):
+        '''
+        Validates the uniqueness between a call's destination and
+        timestamp, i.e. a person cannot receive two calls at once
+        '''
         if self.destination is not None:
             conflict = CallRecord.objects.filter(
                 destination=self.destination,
@@ -123,7 +139,12 @@ class CallRecord(models.Model):
                     + ' this destination and timestamp'
                 )
 
+    
     def validate_call_id(self):
+        '''
+        Validates the existence of a start call record if there is an
+        attempt to insert an end call record with a given call_id
+        '''
         if self.type == 'E':
             start = CallRecord.objects.filter(
                 type='S',
@@ -136,6 +157,12 @@ class CallRecord(models.Model):
                 )
 
     def validate_overlap(self):
+        '''
+        Validates that calls cannot start before another call has ended
+        and if there's an attempt to add a start call record, that it
+        cannot exist if there's an end call record in a timestamp
+        after its own
+        '''
         if self.type == 'S':
             started_calls = CallRecord.objects.filter(
                 source=self.source,
@@ -166,6 +193,10 @@ class CallRecord(models.Model):
                 )
 
     def validate_end_call_timestamp(self):
+        '''
+        Validates that an end call record cannot have a timestamp
+        before its own start call record pair
+        '''
         if self.type == 'E':
             started_call = CallRecord.objects.get(
                 call_id=self.call_id,
@@ -178,10 +209,17 @@ class CallRecord(models.Model):
                 )
 
     def validate_numbers(self):
+        '''
+        If it's a start call record, check for the correctness of its
+        phone number fields
+        '''
         if self.type == 'S':
             self.clean_fields()
 
     def validate_save(self):
+        '''
+        Runs the validation routines
+        '''
         self.validate_numbers()
         self.validate_end_record_with_numbers()
         self.validate_source_and_destination()
@@ -264,6 +302,10 @@ class CallTariff(models.Model):
     valid_after = models.DateField()
 
     def validate_discount(self):
+        '''
+        Validates that a discount tariff can't be greater than the
+        usual tariff (makes sense, right?)
+        '''
         if self.discount_charge > self.minute_charge:
             raise ValidationError(
                 'Cannot create a tariff where the discount charge is greater'
