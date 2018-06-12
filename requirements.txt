@@ -19,3 +19,4 @@ six==1.11.0
 virtualenv==16.0.0
 virtualenv-clone==0.3.0
 wrapt==1.10.11
+gunicorn==19.8.1
