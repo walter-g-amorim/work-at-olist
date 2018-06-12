@@ -84,5 +84,5 @@ Internal-use model that defines the call tariffs to be used in the Phone Bill ca
 ```
 base_tariff: A DecimalField representing the base tariff for any call,
 minute_charge: A DecimalField representing the usual charge per minute,
-discount_charge: A DecimalField representing the discounted charge in the discount per
+discount_charge: A DecimalField representing the discounted charge in the discount period
 ```
