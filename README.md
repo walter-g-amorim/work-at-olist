@@ -25,10 +25,10 @@ There is a `makefile` bundled with this project to facilitate execution.
 Additionally, there is a dump of the populated database in the `db_dump.json`.
 
 ## API Reference
-### /record/
+### /records/
 Route for sending call record data.
 * Methods allowed: `POST`
-* Usage: `POST /record/` with a `Content-Type: application/json` header.
+* Usage: `POST /records/` with a `Content-Type: application/json` header.
 * JSON format:
 ```
 {
